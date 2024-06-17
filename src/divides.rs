@@ -8,7 +8,7 @@ use thiserror::Error;
 
 pub struct Divides<T>(pub T)
 where
-    T: Zero + Rem<Output = T> + Div<Output = T> + Display + PartialEq,
+    T: Zero + Div<Output = T> + Display + PartialEq,
     for<'a> &'a T: Rem<Output = T>;
 
 #[derive(Debug, Error)]
@@ -17,7 +17,7 @@ pub struct DoesNotDivide<T: Display>(T, T);
 
 impl<T> Div for Divides<T>
 where
-    T: Zero + Rem<Output = T> + Div<Output = T> + Display + PartialEq,
+    T: Zero + Div<Output = T> + Display + PartialEq,
     for<'a> &'a T: Rem<Output = T>,
 {
     type Output = Result<Divides<T>, DoesNotDivide<T>>;
