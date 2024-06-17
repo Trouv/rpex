@@ -8,9 +8,10 @@ use nom::{
     Finish, IResult,
 };
 
-struct Rectangle {
-    width: u32,
-    height: u32,
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
+pub struct Rectangle {
+    pub width: u32,
+    pub height: u32,
 }
 
 impl Rectangle {
