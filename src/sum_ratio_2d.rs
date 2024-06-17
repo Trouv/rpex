@@ -7,7 +7,7 @@ use nom::{
 
 use crate::{
     dimension_sum::{DimensionSum, DoesNotDivide, IndeterminateDimensionSum},
-    rectangle::Rectangle,
+    rectangle::HyperRectangle,
 };
 use thiserror::Error;
 
@@ -43,10 +43,10 @@ impl IndeterminateSumRatio2d {
 
     fn evaluate(
         self,
-        rectangle: Rectangle,
+        rectangle: HyperRectangle<2>,
     ) -> Result<(SumRatio2d, u32), SumRatio2dEvaluationError> {
-        let maybe_x_scale = self.x_sum.infer_scale(rectangle.width)?;
-        let maybe_y_scale = self.y_sum.infer_scale(rectangle.height)?;
+        let maybe_x_scale = self.x_sum.infer_scale(rectangle.lengths[0])?;
+        let maybe_y_scale = self.y_sum.infer_scale(rectangle.lengths[1])?;
 
         let scale = match (maybe_x_scale, maybe_y_scale) {
             (Some(x_scale), Some(y_scale)) if x_scale == y_scale => x_scale,
@@ -57,8 +57,8 @@ impl IndeterminateSumRatio2d {
             (None, None) => 1,
         };
 
-        let x_sum = self.x_sum.evaluate(rectangle.width, scale)?;
-        let y_sum = self.y_sum.evaluate(rectangle.height, scale)?;
+        let x_sum = self.x_sum.evaluate(rectangle.lengths[0], scale)?;
+        let y_sum = self.y_sum.evaluate(rectangle.lengths[1], scale)?;
 
         Ok((SumRatio2d { x_sum, y_sum }, scale))
     }

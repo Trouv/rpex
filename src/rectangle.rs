@@ -4,36 +4,43 @@ use nom::{
     character::complete::{char as char_parser, u32 as u32_parser},
     combinator::all_consuming,
     error::Error,
-    sequence::separated_pair,
     Finish, IResult,
 };
 
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
-pub struct Rectangle {
-    pub width: u32,
-    pub height: u32,
+use crate::parser_combinators::separated_list_m_n;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct HyperRectangle<const D: usize> {
+    pub lengths: [u32; D],
 }
 
-impl Rectangle {
-    fn parser(input: &str) -> IResult<&str, Rectangle> {
-        let (input, (width, height)) =
-            separated_pair(u32_parser, char_parser('x'), u32_parser)(input)?;
+impl<const D: usize> HyperRectangle<D> {
+    fn parser(input: &str) -> IResult<&str, HyperRectangle<D>> {
+        assert!(D != 0, "0-dimensional HyperRectangles not supported");
 
-        Ok((input, Rectangle { width, height }))
+        let (input, lengths) = separated_list_m_n(D, D, char_parser('x'), u32_parser)(input)?;
+
+        Ok((
+            input,
+            HyperRectangle {
+                lengths: lengths
+                    .try_into()
+                    .expect("we parsed lengths to have D elements"),
+            },
+        ))
     }
 }
 
-impl FromStr for Rectangle {
+impl<const D: usize> FromStr for HyperRectangle<D> {
     type Err = Error<String>;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, resolution) =
-            all_consuming(Rectangle::parser)(s)
-                .finish()
-                .map_err(|Error { input, code }| Error {
-                    input: input.to_string(),
-                    code,
-                })?;
+        let (_, resolution) = all_consuming(HyperRectangle::<D>::parser)(s)
+            .finish()
+            .map_err(|Error { input, code }| Error {
+                input: input.to_string(),
+                code,
+            })?;
 
         Ok(resolution)
     }
