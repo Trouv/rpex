@@ -1,4 +1,4 @@
-use std::{convert::TryFrom, fmt::Display, str::FromStr};
+use std::{fmt::Display, str::FromStr};
 
 use nom::{
     character::complete::{char as char_parser, u32 as u32_parser},
@@ -9,6 +9,7 @@ use nom::{
 };
 use thiserror::Error;
 
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct DimensionSum {
     addends: Vec<u32>,
 }
