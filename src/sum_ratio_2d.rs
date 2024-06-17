@@ -3,7 +3,8 @@ use std::{collections::HashSet, str::FromStr};
 use nom::{character::complete::char as char_parser, IResult};
 
 use crate::{
-    dimension_sum::{DimensionSum, DoesNotDivide, IndeterminateDimensionSum},
+    dimension_sum::{DimensionSum, IndeterminateDimensionSum},
+    divides::DoesNotDivide,
     impl_from_str_for_nom_parsable,
     nom_parsable::NomParsable,
     parser_combinators::separated_list_m_n,
@@ -25,7 +26,7 @@ enum SumsInRatioEvaluationError {
     #[error("inferred scales from dimensions are unequal: {0:?}")]
     UnequalScales(HashSet<u32>),
     #[error("division error occurred: {0}")]
-    DoesNotDivide(#[from] DoesNotDivide),
+    DoesNotDivide(#[from] DoesNotDivide<u32>),
 }
 
 impl<const D: usize> IndeterminateSumsInRatio<D> {

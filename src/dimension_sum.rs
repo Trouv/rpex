@@ -8,7 +8,11 @@ use nom::{
 };
 use thiserror::Error;
 
-use crate::{impl_from_str_for_nom_parsable, nom_parsable::NomParsable};
+use crate::{
+    divides::{Divides, DoesNotDivide},
+    impl_from_str_for_nom_parsable,
+    nom_parsable::NomParsable,
+};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct DimensionSum {
@@ -30,20 +34,6 @@ pub struct IndeterminateDimensionSum {
     pub addends: Vec<Option<u32>>,
 }
 
-#[derive(Debug, Error)]
-#[error("{0} does not divide {1}")]
-pub struct DoesNotDivide(u32, u32);
-
-impl DoesNotDivide {
-    fn try_divide(dividend: u32, divisor: u32) -> Result<u32, DoesNotDivide> {
-        if dividend % divisor == 0 {
-            Ok(dividend / divisor)
-        } else {
-            Err(DoesNotDivide(divisor, dividend))
-        }
-    }
-}
-
 impl IndeterminateDimensionSum {
     fn count_unknowns(&self) -> usize {
         self.addends.iter().filter(|o| o.is_none()).count()
@@ -53,9 +43,9 @@ impl IndeterminateDimensionSum {
         self.addends.iter().flatten().sum()
     }
 
-    pub fn infer_scale(&self, length: u32) -> Result<Option<u32>, DoesNotDivide> {
+    pub fn infer_scale(&self, length: u32) -> Result<Option<u32>, DoesNotDivide<u32>> {
         if self.count_unknowns() == 0 {
-            let scale = DoesNotDivide::try_divide(length, self.sum_knowns())?;
+            let scale = (Divides(length) / (Divides(self.sum_knowns())))?.0;
 
             Ok(Some(scale))
         } else {
@@ -63,12 +53,12 @@ impl IndeterminateDimensionSum {
         }
     }
 
-    pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, DoesNotDivide> {
-        let total = DoesNotDivide::try_divide(length, scale)?;
+    pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, DoesNotDivide<u32>> {
+        let total = (Divides(length) / Divides(scale))?.0;
 
         let total_unknown = total - self.sum_knowns();
 
-        let solution = DoesNotDivide::try_divide(total_unknown, self.count_unknowns() as u32)?;
+        let solution = (Divides(total_unknown) / Divides(self.count_unknowns() as u32))?.0;
 
         let addends = self
             .addends
