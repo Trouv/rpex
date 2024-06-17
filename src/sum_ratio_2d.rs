@@ -1,12 +1,11 @@
 use std::{collections::HashSet, str::FromStr};
 
-use nom::{
-    character::complete::char as char_parser, combinator::all_consuming, error::Error, Finish,
-    IResult,
-};
+use nom::{character::complete::char as char_parser, IResult};
 
 use crate::{
     dimension_sum::{DimensionSum, DoesNotDivide, IndeterminateDimensionSum},
+    impl_from_str_for_nom_parsable,
+    nom_parsable::NomParsable,
     parser_combinators::separated_list_m_n,
     rectangle::HyperRectangle,
 };
@@ -30,20 +29,6 @@ enum SumsInRatioEvaluationError {
 }
 
 impl<const D: usize> IndeterminateSumsInRatio<D> {
-    pub fn parser(input: &str) -> IResult<&str, IndeterminateSumsInRatio<D>> {
-        assert!(D != 0, "0-dimensional SumsInRatio are not supported");
-
-        let (input, sums) =
-            separated_list_m_n(D, D, char_parser(':'), IndeterminateDimensionSum::parser)(input)?;
-
-        Ok((
-            input,
-            IndeterminateSumsInRatio {
-                sums: sums.try_into().expect("we parsed sums to have D elements"),
-            },
-        ))
-    }
-
     fn evaluate(
         self,
         rectangle: HyperRectangle<D>,
@@ -82,19 +67,24 @@ impl<const D: usize> IndeterminateSumsInRatio<D> {
     }
 }
 
-impl<const D: usize> FromStr for IndeterminateSumsInRatio<D> {
-    type Err = Error<String>;
+impl<const D: usize> NomParsable for IndeterminateSumsInRatio<D> {
+    fn parser(input: &str) -> IResult<&str, IndeterminateSumsInRatio<D>> {
+        assert!(D != 0, "0-dimensional SumsInRatio are not supported");
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, dim_sum) = all_consuming(IndeterminateSumsInRatio::parser)(s)
-            .finish()
-            .map_err(|Error { input, code }| Error {
-                input: input.to_string(),
-                code,
-            })?;
+        let (input, sums) =
+            separated_list_m_n(D, D, char_parser(':'), IndeterminateDimensionSum::parser)(input)?;
 
-        Ok(dim_sum)
+        Ok((
+            input,
+            IndeterminateSumsInRatio {
+                sums: sums.try_into().expect("we parsed sums to have D elements"),
+            },
+        ))
     }
+}
+
+impl<const D: usize> FromStr for IndeterminateSumsInRatio<D> {
+    impl_from_str_for_nom_parsable!();
 }
 
 #[cfg(test)]

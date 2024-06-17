@@ -2,19 +2,20 @@ use std::str::FromStr;
 
 use nom::{
     character::complete::{char as char_parser, u32 as u32_parser},
-    combinator::all_consuming,
-    error::Error,
-    Finish, IResult,
+    IResult,
 };
 
-use crate::parser_combinators::separated_list_m_n;
+use crate::{
+    impl_from_str_for_nom_parsable, nom_parsable::NomParsable,
+    parser_combinators::separated_list_m_n,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct HyperRectangle<const D: usize> {
     pub lengths: [u32; D],
 }
 
-impl<const D: usize> HyperRectangle<D> {
+impl<const D: usize> NomParsable for HyperRectangle<D> {
     fn parser(input: &str) -> IResult<&str, HyperRectangle<D>> {
         assert!(D != 0, "0-dimensional HyperRectangles not supported");
 
@@ -32,16 +33,5 @@ impl<const D: usize> HyperRectangle<D> {
 }
 
 impl<const D: usize> FromStr for HyperRectangle<D> {
-    type Err = Error<String>;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, resolution) = all_consuming(HyperRectangle::<D>::parser)(s)
-            .finish()
-            .map_err(|Error { input, code }| Error {
-                input: input.to_string(),
-                code,
-            })?;
-
-        Ok(resolution)
-    }
+    impl_from_str_for_nom_parsable!();
 }

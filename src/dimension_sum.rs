@@ -2,12 +2,13 @@ use std::{fmt::Display, str::FromStr};
 
 use nom::{
     character::complete::{char as char_parser, u32 as u32_parser},
-    combinator::{all_consuming, opt},
-    error::Error,
+    combinator::opt,
     multi::separated_list1,
-    Finish, IResult,
+    IResult,
 };
 use thiserror::Error;
+
+use crate::{impl_from_str_for_nom_parsable, nom_parsable::NomParsable};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct DimensionSum {
@@ -44,12 +45,6 @@ impl DoesNotDivide {
 }
 
 impl IndeterminateDimensionSum {
-    pub fn parser(input: &str) -> IResult<&str, IndeterminateDimensionSum> {
-        let (input, values) = separated_list1(char_parser('+'), opt(u32_parser))(input)?;
-
-        Ok((input, IndeterminateDimensionSum { addends: values }))
-    }
-
     fn count_unknowns(&self) -> usize {
         self.addends.iter().filter(|o| o.is_none()).count()
     }
@@ -85,19 +80,16 @@ impl IndeterminateDimensionSum {
     }
 }
 
-impl FromStr for IndeterminateDimensionSum {
-    type Err = Error<String>;
+impl NomParsable for IndeterminateDimensionSum {
+    fn parser(input: &str) -> IResult<&str, IndeterminateDimensionSum> {
+        let (input, values) = separated_list1(char_parser('+'), opt(u32_parser))(input)?;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, dim_sum) = all_consuming(IndeterminateDimensionSum::parser)(s)
-            .finish()
-            .map_err(|Error { input, code }| Error {
-                input: input.to_string(),
-                code,
-            })?;
-
-        Ok(dim_sum)
+        Ok((input, IndeterminateDimensionSum { addends: values }))
     }
+}
+
+impl FromStr for IndeterminateDimensionSum {
+    impl_from_str_for_nom_parsable!();
 }
 
 impl Display for IndeterminateDimensionSum {
