@@ -1,9 +1,10 @@
 use std::{collections::HashSet, str::FromStr};
 
+use itertools::Itertools;
 use nom::{character::complete::char as char_parser, IResult};
 
 use crate::{
-    dimension_sum::{DimensionSum, IndeterminateDimensionSum},
+    dimension_sum::{AddendWithOffset, DimensionSum, IndeterminateDimensionSum},
     divides::DoesNotDivide,
     impl_from_str_for_nom_parsable,
     nom_parsable::NomParsable,
@@ -12,17 +13,42 @@ use crate::{
 };
 use thiserror::Error;
 
-struct SumsInRatio<const D: usize> {
+pub struct SumsInRatio<const D: usize> {
     sums: [DimensionSum; D],
 }
 
+pub struct Partition<'a, const D: usize> {
+    pub ratio_position: [u32; D],
+    pub ratio: [&'a u32; D],
+}
+
+impl<const D: usize> SumsInRatio<D> {
+    pub fn iter_partitions(&self) -> impl Iterator<Item = Partition<D>> {
+        self.sums
+            .iter()
+            .map(|dim_sum| dim_sum.iter_with_offsets().collect::<Vec<_>>())
+            .multi_cartesian_product()
+            .map(|dimension_sums_with_offsets| {
+                let (addends, offsets): (Vec<&u32>, Vec<u32>) = dimension_sums_with_offsets
+                    .into_iter()
+                    .map(|AddendWithOffset { addend, offset }| (addend, offset))
+                    .unzip();
+
+                Partition {
+                    ratio_position: offsets.try_into().expect(""),
+                    ratio: addends.try_into().expect(""),
+                }
+            })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct IndeterminateSumsInRatio<const D: usize> {
+pub struct IndeterminateSumsInRatio<const D: usize> {
     pub sums: [IndeterminateDimensionSum; D],
 }
 
 #[derive(Error, Debug)]
-enum SumsInRatioEvaluationError {
+pub enum SumsInRatioEvaluationError {
     #[error("inferred scales from dimensions are unequal: {0:?}")]
     UnequalScales(HashSet<u32>),
     #[error("division error occurred: {0}")]
@@ -30,7 +56,7 @@ enum SumsInRatioEvaluationError {
 }
 
 impl<const D: usize> IndeterminateSumsInRatio<D> {
-    fn evaluate(
+    pub fn evaluate(
         self,
         rectangle: HyperRectangle<D>,
     ) -> Result<(SumsInRatio<D>, u32), SumsInRatioEvaluationError> {
