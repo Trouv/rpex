@@ -6,7 +6,6 @@ use nom::{
     multi::separated_list1,
     IResult,
 };
-use thiserror::Error;
 
 use crate::{
     divides::{Divides, DoesNotDivide},
@@ -54,17 +53,22 @@ impl IndeterminateDimensionSum {
     }
 
     pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, DoesNotDivide<u32>> {
-        let total = (Divides(length) / Divides(scale))?.0;
+        let unknown_count = self.count_unknowns();
 
-        let total_unknown = total - self.sum_knowns();
+        let addends = if unknown_count != 0 {
+            let total = (Divides(length) / Divides(scale))?.0;
 
-        let solution = (Divides(total_unknown) / Divides(self.count_unknowns() as u32))?.0;
+            let total_unknown = total - self.sum_knowns();
 
-        let addends = self
-            .addends
-            .into_iter()
-            .map(|maybe_addend| maybe_addend.unwrap_or(solution))
-            .collect();
+            let solution = (Divides(total_unknown) / Divides(self.count_unknowns() as u32))?.0;
+
+            self.addends
+                .into_iter()
+                .map(|maybe_addend| maybe_addend.unwrap_or(solution))
+                .collect()
+        } else {
+            self.addends.into_iter().flatten().collect()
+        };
 
         Ok(DimensionSum { addends })
     }
