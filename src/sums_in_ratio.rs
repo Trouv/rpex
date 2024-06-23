@@ -68,7 +68,7 @@ impl<const D: usize> IndeterminateSumsInRatio<D> {
             .flat_map(|(sum, length)| sum.infer_scale(length).transpose())
             .collect::<Result<HashSet<_>, _>>()?;
 
-        let scale = match inferred_scales.len() {
+        let known_scale = match inferred_scales.len() {
             0 => 1,
             1 => inferred_scales
                 .into_iter()
@@ -77,8 +77,16 @@ impl<const D: usize> IndeterminateSumsInRatio<D> {
             _ => return Err(SumsInRatioEvaluationError::UnequalScales(inferred_scales)),
         };
 
+        let scale = rectangle
+            .lengths
+            .iter()
+            .fold(known_scale, |gcd, length| gcd.gcd(length));
+
+        let scale_factor = known_scale / scale;
+
         let evaluated_sums = self
             .sums
+            .map(|dim_sum| dim_sum * scale_factor)
             .into_iter()
             .zip(rectangle.lengths)
             .map(|(sum, length)| sum.evaluate(length, scale))
