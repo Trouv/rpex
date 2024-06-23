@@ -18,7 +18,28 @@ pub struct DimensionSum {
     addends: Vec<u32>,
 }
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct AddendWithOffset<'a> {
+    pub addend: &'a u32,
+    pub offset: u32,
+}
+
 impl DimensionSum {
+    pub fn addends(&self) -> &[u32] {
+        &self.addends
+    }
+
+    pub fn iter_with_offsets(&self) -> impl Iterator<Item = AddendWithOffset> {
+        self.addends.iter().scan(0, |offset, addend| {
+            let previous_offset = *offset;
+            *offset += addend;
+            Some(AddendWithOffset {
+                offset: previous_offset,
+                addend,
+            })
+        })
+    }
+
     fn sum(&self) -> u32 {
         self.addends.iter().sum()
     }
