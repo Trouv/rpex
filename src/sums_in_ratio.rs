@@ -1,14 +1,15 @@
 use std::{collections::HashSet, str::FromStr};
 
+use fraction::Integer;
 use itertools::Itertools;
 use nom::{character::complete::char as char_parser, IResult};
 
 use crate::{
     dimension_sum::{AddendWithOffset, DimensionSum, IndeterminateDimensionSum},
-    divides::DoesNotDivide,
     impl_from_str_for_nom_parsable,
     nom_parsable::NomParsable,
     parser_combinators::separated_list_m_n,
+    ratio_ext::NotAnInteger,
     rectangle::HyperRectangle,
 };
 use thiserror::Error;
@@ -52,7 +53,7 @@ pub enum SumsInRatioEvaluationError {
     #[error("inferred scales from dimensions are unequal: {0:?}")]
     UnequalScales(HashSet<u32>),
     #[error("division error occurred: {0}")]
-    DoesNotDivide(#[from] DoesNotDivide<u32>),
+    DoesNotDivide(#[from] NotAnInteger<u32>),
 }
 
 impl<const D: usize> IndeterminateSumsInRatio<D> {

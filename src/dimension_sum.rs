@@ -1,5 +1,6 @@
-use std::{fmt::Display, str::FromStr};
+use std::{fmt::Display, ops::Mul, str::FromStr};
 
+use fraction::Ratio;
 use nom::{
     character::complete::{char as char_parser, u32 as u32_parser},
     combinator::opt,
@@ -8,9 +9,8 @@ use nom::{
 };
 
 use crate::{
-    divides::{Divides, DoesNotDivide},
-    impl_from_str_for_nom_parsable,
-    nom_parsable::NomParsable,
+    impl_from_str_for_nom_parsable, nom_parsable::NomParsable, ratio_ext::NotAnInteger,
+    ratio_ext::RatioExt,
 };
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -63,9 +63,9 @@ impl IndeterminateDimensionSum {
         self.addends.iter().flatten().sum()
     }
 
-    pub fn infer_scale(&self, length: u32) -> Result<Option<u32>, DoesNotDivide<u32>> {
+    pub fn infer_scale(&self, length: u32) -> Result<Option<u32>, NotAnInteger<u32>> {
         if self.count_unknowns() == 0 {
-            let scale = (Divides(length) / (Divides(self.sum_knowns())))?.0;
+            let scale = Ratio::new(length, self.sum_knowns()).try_to_integer()?;
 
             Ok(Some(scale))
         } else {
@@ -73,15 +73,15 @@ impl IndeterminateDimensionSum {
         }
     }
 
-    pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, DoesNotDivide<u32>> {
+    pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, NotAnInteger<u32>> {
         let unknown_count = self.count_unknowns();
 
         let addends = if unknown_count != 0 {
-            let total = (Divides(length) / Divides(scale))?.0;
+            let total = Ratio::new(length, scale);
 
             let total_unknown = total - self.sum_knowns();
 
-            let solution = (Divides(total_unknown) / Divides(self.count_unknowns() as u32))?.0;
+            let solution = (total_unknown / self.count_unknowns() as u32).try_to_integer()?;
 
             self.addends
                 .into_iter()

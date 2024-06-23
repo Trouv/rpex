@@ -1,6 +1,7 @@
 mod dimension_sum;
 mod nom_parsable;
 mod parser_combinators;
+mod ratio_ext;
 mod rectangle;
 pub use rectangle::HyperRectangle;
 mod sums_in_ratio;
