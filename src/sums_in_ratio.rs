@@ -5,7 +5,9 @@ use itertools::Itertools;
 use nom::{character::complete::char as char_parser, IResult};
 
 use crate::{
-    dimension_sum::{AddendWithOffset, DimensionSum, IndeterminateDimensionSum},
+    dimension_sum::{
+        AddendWithOffset, DimensionSum, DimensionSumEvaluationError, IndeterminateDimensionSum,
+    },
     impl_from_str_for_nom_parsable,
     nom_parsable::NomParsable,
     parser_combinators::separated_list_m_n,
@@ -54,6 +56,8 @@ pub enum SumsInRatioEvaluationError {
     UnequalScales(HashSet<u32>),
     #[error("division error occurred: {0}")]
     DoesNotDivide(#[from] NotAnInteger<u32>),
+    #[error("unable to evaluate dimension sum: {0}")]
+    DimensionSumEvaluation(#[from] DimensionSumEvaluationError),
 }
 
 impl<const D: usize> IndeterminateSumsInRatio<D> {
@@ -89,7 +93,7 @@ impl<const D: usize> IndeterminateSumsInRatio<D> {
             .map(|dim_sum| dim_sum * scale_factor)
             .into_iter()
             .zip(rectangle.lengths)
-            .map(|(sum, length)| sum.evaluate(length, scale))
+            .map(|(sum, length)| sum.evaluate(length / scale))
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok((

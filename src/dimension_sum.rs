@@ -7,6 +7,7 @@ use nom::{
     multi::separated_list1,
     IResult,
 };
+use thiserror::Error;
 
 use crate::{
     impl_from_str_for_nom_parsable, nom_parsable::NomParsable, ratio_ext::NotAnInteger,
@@ -54,6 +55,14 @@ pub struct IndeterminateDimensionSum {
     pub addends: Vec<Option<u32>>,
 }
 
+#[derive(Error, Debug)]
+pub enum DimensionSumEvaluationError {
+    #[error("attempted to perform imperfect division: {0}")]
+    DoesNotDivide(#[from] NotAnInteger<u32>),
+    #[error("provided total {0} does not equal actual total {1}")]
+    UnequalTotal(u32, u32),
+}
+
 impl IndeterminateDimensionSum {
     fn count_unknowns(&self) -> usize {
         self.addends.iter().filter(|o| o.is_none()).count()
@@ -73,21 +82,28 @@ impl IndeterminateDimensionSum {
         }
     }
 
-    pub fn evaluate(self, length: u32, scale: u32) -> Result<DimensionSum, NotAnInteger<u32>> {
+    pub fn evaluate(self, total: u32) -> Result<DimensionSum, DimensionSumEvaluationError> {
         let unknown_count = self.count_unknowns();
 
         let addends = if unknown_count != 0 {
-            let total = Ratio::new(length, scale);
-
             let total_unknown = total - self.sum_knowns();
 
-            let solution = (total_unknown / self.count_unknowns() as u32).try_to_integer()?;
+            let solution =
+                Ratio::new(total_unknown, self.count_unknowns() as u32).try_to_integer()?;
 
             self.addends
                 .into_iter()
                 .map(|maybe_addend| maybe_addend.unwrap_or(solution))
                 .collect()
         } else {
+            let actual_total = self.sum_knowns();
+            if actual_total != total {
+                return Err(DimensionSumEvaluationError::UnequalTotal(
+                    total,
+                    actual_total,
+                ));
+            }
+
             self.addends.into_iter().flatten().collect()
         };
 
