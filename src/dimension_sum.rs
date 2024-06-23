@@ -95,6 +95,20 @@ impl IndeterminateDimensionSum {
     }
 }
 
+impl Mul<u32> for IndeterminateDimensionSum {
+    type Output = IndeterminateDimensionSum;
+
+    fn mul(self, rhs: u32) -> Self::Output {
+        let addends = self
+            .addends
+            .into_iter()
+            .map(|maybe_addend| maybe_addend.map(|addend| addend * rhs))
+            .collect();
+
+        IndeterminateDimensionSum { addends }
+    }
+}
+
 impl NomParsable for IndeterminateDimensionSum {
     fn parser(input: &str) -> IResult<&str, IndeterminateDimensionSum> {
         let (input, values) = separated_list1(char_parser('+'), opt(u32_parser))(input)?;
