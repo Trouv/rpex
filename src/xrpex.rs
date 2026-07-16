@@ -9,9 +9,15 @@ use thiserror::Error;
 use xrandr::Monitor as XrandrMonitor;
 use xrandr::XHandle;
 
+/// Ratio Partition EXpression.
+///
+/// A tool for expressively partitioning monitors.
 #[derive(Parser)]
 struct XrpexArgs {
+    /// The rpex used to partition the monitor.
+    /// See https://github.com/trouv/rpex for examples.
     rpex: Rpex<2>,
+    /// The name of the monitor to partition.
     #[arg(short, long, env = "XRPEX_MONITOR")]
     monitor: String,
 }
