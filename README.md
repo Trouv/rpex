@@ -41,3 +41,8 @@ You can also partition the monitor vertically. Say you want 4 quadrants of equal
 ```sh
 xrpex +:+
 ```
+
+You can also split it more than once in a single dimension. Here's how to create a central 4:3 monitor, and two tall monitors pillarboxing it:
+```sh
+xrpex +4+:3
+```
