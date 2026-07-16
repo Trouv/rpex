@@ -12,6 +12,12 @@ cargo install rpex
 ```
 
 ## Usage
+Requires setting `XRPEX_MONITOR` or `--monitor` to the name of the monitor you want to partition. The name should be as it appears in...
+```sh
+xrandr --listmonitors | awk '{ print $4 }'
+```
+Consider exporting this in your *~/.bashrc*!
+
 A very explicit way to split a 16:9 monitor into two of equal size:
 ```sh
 xrpex 8+8:9
