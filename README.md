@@ -5,6 +5,12 @@ The main goal of this tool is to expressively split a single monitor into many v
 `xrpex` is the binary that allows you to do so (so far in just X11, not wayland or any non-linux display servers).
 `rpex` is the name of the expression that defines the ratio partition, and is written in a way that it could be applied to any other n-dimensional-rectangle-partitioning situation.
 
+## Install
+Currently this tool is only distributed through crates.io.
+```
+cargo install rpex
+```
+
 ## Usage
 A very explicit way to split a 16:9 monitor into two of equal size:
 ```sh
