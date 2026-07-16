@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod dimension_sum;
 mod nom_parsable;
 mod parser_combinators;
