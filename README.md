@@ -16,7 +16,7 @@ Or, say you want a square monitor on the right, and the left to be the remaining
 ```sh
 xrpex 7+9:9
 ```
-However, in this situation, you might not want to do the math in your head that `16-9=7`.
+However, in this situation, you might not want to do the math in your head that `16 - 9 = 7`.
 `xrpex` is smart enough to solve for missing numbers, treating the existing numbers as being "in ratio" to each other, and relying on the dimensions of the available space to figure out the rest.
 So, the above example is equivalent to:
 ```sh
